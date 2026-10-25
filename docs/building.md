@@ -7,6 +7,14 @@ Before building, ensure you have the following installed:
 - Python 3
 - Git
 - Make
+- `zip` and `unzip` (used by the build to rewrite the jar manifest)
+
+On Debian/Ubuntu (including WSL2), install them as shown below. The `--` keeps `sudo-rs`, the default `sudo` since
+Ubuntu 26.04, from parsing `-y` as its own option:
+
+```bash
+sudo -- apt update && sudo -- apt install -y git make python3 zip unzip
+```
 
 ## Quick Start
 
@@ -56,6 +64,7 @@ converts line endings to CRLF, which breaks the shell scripts and the Makefile, 
 `/mnt/c` are much slower.
 
 ```bash
+sudo -- apt update && sudo -- apt install -y git make python3 zip unzip
 git clone <repository-url> ~/src/mongot && cd ~/src/mongot
 make build.deploy.community.windows
 ```
