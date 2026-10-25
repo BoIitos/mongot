@@ -24,6 +24,7 @@ Welcome to MongoDB Search!
 - Developer Center - https://www.mongodb.com/developer/
 - MongoDB University - https://learn.mongodb.com
 - Building - [docs/building.md](docs/building.md)
+- Building for Windows - [docs/building.md#building-for-windows](docs/building.md#building-for-windows)
 
 ## Forums
 

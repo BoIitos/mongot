@@ -70,6 +70,19 @@ public class SecretsParserTest {
   }
 
   @Test
+  public void readSecretFile_contentWithUtf8Bom_returnsContentWithoutBom() throws IOException {
+    Path file = createSecretFile("\uFEFFmysecret\r\n");
+
+    try {
+      String result = SecretsParser.readSecretFile(file);
+
+      assertThat(result).isEqualTo("mysecret");
+    } finally {
+      Files.deleteIfExists(file);
+    }
+  }
+
+  @Test
   public void readSecretFile_emptyFile_returnsEmptyString() throws IOException {
     Path file = createSecretFile("");
 

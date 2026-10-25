@@ -47,6 +47,29 @@ Available platforms:
 - `linux_x86_64` (default)
 - Other platforms as defined in `//bazel/platforms`
 
+### Building for Windows
+
+mongot runs on Windows x86_64, but the build itself runs on Linux x86_64. On a Windows machine,
+build inside [WSL2](https://learn.microsoft.com/windows/wsl/install) (e.g. Ubuntu) from a clone
+made *inside* WSL. Do not build from a Windows checkout under `/mnt/c/...`: Git for Windows usually
+converts line endings to CRLF, which breaks the shell scripts and the Makefile, and builds on
+`/mnt/c` are much slower.
+
+```bash
+git clone <repository-url> ~/src/mongot && cd ~/src/mongot
+make build.deploy.community.windows
+```
+
+This produces `bazel-bin/deploy/mongot-community-windows_<version>_windows_x86_64.zip` containing:
+- the platform-independent `mongot_community_deploy.jar` and FIPS jars
+- a bundled Windows Temurin JDK 21
+- `mongot_vecsim.dll`, cross-compiled from `src/main/c` with [llvm-mingw](https://github.com/mstorsjo/llvm-mingw)
+- `mongot.cmd`, a Windows sample config, and a Windows service wrapper ([WinSW](https://github.com/winsw/winsw))
+
+Copy the zip to Windows (from WSL: `cp bazel-bin/deploy/mongot-community-windows_*.zip /mnt/c/Users/<you>/Downloads/`),
+unzip it and follow the included `README-Windows.md`. The Windows-specific launcher, configuration
+and service files live in `deploy/windows-resources/`.
+
 ### Recommended Build Workflow
 
 For most users building from source, follow this sequence:

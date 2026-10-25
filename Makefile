@@ -37,6 +37,13 @@ build.deploy.community:
 		--platforms=//bazel/platforms:$(PLATFORM) \
 		//deploy:mongot-community
 
+# Windows x86_64 bundle (zip). Build on a Linux x86_64 host or inside WSL2.
+.PHONY: build.deploy.community.windows
+build.deploy.community.windows:
+	@echo 'Building community deployable for Windows x86_64'
+	@$(call BAZEL) build //deploy:mongot-community-windows
+	@echo 'Output: '$$($(call BAZEL) cquery --output=files //deploy:mongot-community-windows 2>/dev/null)
+
 # linting rules
 .PHONY: lint
 lint:

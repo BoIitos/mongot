@@ -1,5 +1,11 @@
+#if defined(_WIN32)
+// PE/COFF has no ELF-style symbol visibility: export explicitly, everything else stays internal.
+#define EXPORT __declspec(dllexport)
+#define HIDDEN
+#else
 #define EXPORT __attribute__((visibility("default")))
 #define HIDDEN __attribute__((visibility("hidden")))
+#endif
 
 #include <math.h>
 #include <stdbool.h>

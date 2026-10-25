@@ -47,6 +47,7 @@ use_repo(
     "adoptium_jdk_community_linux_x86_64",
     "adoptium_jdk_community_macos_aarch64",
     "adoptium_jdk_community_macos_x86_64",
+    "adoptium_jdk_community_windows_x86_64",
     "adoptium_jdk_linux_aarch64",
     "adoptium_jdk_linux_aarch64_repo",
     "adoptium_jdk_linux_aarch64_repo_toolchain_config_repo",

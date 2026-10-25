@@ -1,5 +1,7 @@
+load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_tar")
 load("@rules_pkg//pkg:providers.bzl", "PackageVariablesInfo")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 load("//bazel/config:def.bzl", "VersionInfo")
 
 def package_deploy_tar(name, bin, lib, toplevel = [], with_tags = True, license = [], target_jdk = "//deploy:release_target_jdk", docker_jdk = "//deploy:docker_target_jdk"):
@@ -83,6 +85,68 @@ def package_deploy_tar(name, bin, lib, toplevel = [], with_tags = True, license 
             ":{}-bin-docker".format(name),
             ":{}-lib".format(name),
         ],
+        visibility = ["//visibility:public"],
+    )
+
+def package_deploy_zip(name, bin, lib, target_jdk, package_variables, toplevel = [], license = []):
+    """Makes a deployable .zip bundle for Windows.
+
+    Same layout as package_deploy_tar:
+      mongot-community/
+      ├── toplevel labels (mongot.cmd, config.default.yml, ...)
+      ├── bin
+      │   ├── jdk             (Windows JDK)
+      │   └── bin labels      (mongot_community_deploy.jar)
+      ├── lib                 (lib labels, e.g. fips jars and mongot_vecsim.dll)
+      └── LICENSE             (if license provided)
+
+    The archive itself is named <name>_{version}_{platform}.zip using package_variables.
+    """
+
+    pkg_files(
+        name = "{}-bin-files".format(name),
+        srcs = bin,
+        prefix = "bin",
+    )
+
+    pkg_filegroup(
+        name = "{}-bin-jdk".format(name),
+        srcs = [target_jdk],
+        prefix = "bin",
+    )
+
+    pkg_files(
+        name = "{}-lib-files".format(name),
+        srcs = lib,
+        prefix = "lib",
+    )
+
+    pkg_files(
+        name = "{}-toplevel-files".format(name),
+        srcs = toplevel,
+    )
+
+    srcs = [
+        ":{}-bin-files".format(name),
+        ":{}-bin-jdk".format(name),
+        ":{}-lib-files".format(name),
+        ":{}-toplevel-files".format(name),
+    ]
+
+    if license:
+        pkg_files(
+            name = "{}-license-files".format(name),
+            srcs = license,
+            prefix = "LICENSE",
+        )
+        srcs.append(":{}-license-files".format(name))
+
+    pkg_zip(
+        name = name,
+        srcs = srcs,
+        package_dir = "mongot-community",
+        package_file_name = name + "_{version}_{platform}.zip",
+        package_variables = package_variables,
         visibility = ["//visibility:public"],
     )
 

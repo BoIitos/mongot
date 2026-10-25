@@ -1,0 +1,35 @@
+<!--
+  Windows service definition for mongot, read by mongot-service.exe (WinSW 2.x) from the same
+  directory. Install it with install-service.ps1 from an elevated PowerShell, or manually with
+  `mongot-service.exe install`.
+
+  %BASE% is the directory containing mongot-service.exe (the mongot installation directory).
+  Environment variables such as %ProgramData% are expanded by WinSW.
+-->
+<service>
+  <id>mongot</id>
+  <name>MongoDB Search (mongot)</name>
+  <description>MongoDB Search Community Edition: full-text and vector search for mongod.</description>
+
+  <executable>%BASE%\bin\jdk\bin\java.exe</executable>
+  <arguments>-XX:+ExitOnOutOfMemoryError -XX:-UseGCOverheadLimit --add-modules=jdk.incubator.vector --enable-preview --enable-native-access=ALL-UNNAMED -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp "%BASE%\lib\*;%BASE%\bin\mongot_community_deploy.jar" com.xgen.mongot.community.MongotCommunity --config "%ProgramData%\mongot\config.yml"</arguments>
+  <workingdirectory>%ProgramData%\mongot</workingdirectory>
+
+  <startmode>Automatic</startmode>
+  <delayedAutoStart/>
+  <!-- Uncomment if mongod runs on this machine as the Windows service "MongoDB": -->
+  <!-- <depend>MongoDB</depend> -->
+
+  <!-- WinSW sends Ctrl+C first, so mongot can shut down cleanly before being terminated. -->
+  <stoptimeout>60 sec</stoptimeout>
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="30 sec"/>
+  <onfailure action="restart" delay="60 sec"/>
+  <resetfailure>1 hour</resetfailure>
+
+  <logpath>%ProgramData%\mongot\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+</service>

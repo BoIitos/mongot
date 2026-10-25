@@ -4,18 +4,35 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.Locale;
 import org.jetbrains.annotations.Nullable;
 
 public class FileUtils {
 
   private static final String DEFAULT_TEMP_FILE_SUFFIX = ".tmp";
+
+  /** True when running on Windows, where directories cannot be fsync-ed via a FileChannel. */
+  private static final boolean IS_OS_WINDOWS =
+      System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("windows");
+
+  /**
+   * On Windows a rename fails while any other process (virus scanner, search indexer, backup
+   * agent) briefly holds a handle on the source or target. Retry a few times before giving up.
+   */
+  private static final int WINDOWS_MOVE_MAX_ATTEMPTS = 10;
+
+  private static final long WINDOWS_MOVE_RETRY_BASE_MILLIS = 50;
 
   /**
    * Tries to create a directory if it does not exist. As well as parent directories as needed.
@@ -63,7 +80,7 @@ public class FileUtils {
 
   /** Atomically rename a file. Assuming target's directory exists. */
   public static void atomicallyRename(Path source, Path target) throws IOException {
-    Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+    atomicMove(source, target);
 
     // Flush the directories to disk to ensure metadata is updated.
     // See this comment in wiredtiger's POSIX rename implementation for more information:
@@ -79,6 +96,37 @@ public class FileUtils {
     }
   }
 
+  private static void atomicMove(Path source, Path target) throws IOException {
+    if (!IS_OS_WINDOWS) {
+      Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+      return;
+    }
+
+    for (int attempt = 1; ; attempt++) {
+      try {
+        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+        return;
+      } catch (NoSuchFileException | DirectoryNotEmptyException e) {
+        // Not a transient sharing violation, retrying will not help.
+        throw e;
+      } catch (FileSystemException e) {
+        // AccessDeniedException or a generic "used by another process" sharing violation.
+        if (attempt >= WINDOWS_MOVE_MAX_ATTEMPTS) {
+          throw e;
+        }
+        try {
+          Thread.sleep(WINDOWS_MOVE_RETRY_BASE_MILLIS * attempt);
+        } catch (InterruptedException interrupted) {
+          Thread.currentThread().interrupt();
+          InterruptedIOException ioe =
+              new InterruptedIOException("interrupted while retrying move of " + source);
+          ioe.addSuppressed(e);
+          throw ioe;
+        }
+      }
+    }
+  }
+
   private static void fsync(Path path) throws IOException {
     // See the section "Syncing Filenames" in
     // http://blog.httrack.com/blog/2013/11/15/everything-you-always-wanted-to-know-about-fsync/ on
@@ -88,8 +136,13 @@ public class FileUtils {
     // following thread: http://mail.openjdk.java.net/pipermail/nio-dev/2015-May/003147.html
     // Ideally this will eventually be explicitly added, and is tracked here:
     // https://bugs.openjdk.java.net/browse/JDK-8080235
-    OpenOption openOption =
-        path.toFile().isDirectory() ? StandardOpenOption.READ : StandardOpenOption.WRITE;
+    boolean isDirectory = path.toFile().isDirectory();
+    if (isDirectory && IS_OS_WINDOWS) {
+      // Windows does not allow opening a directory as a FileChannel (AccessDeniedException), and
+      // NTFS journals directory metadata on its own. Lucene's IOUtils.fsync skips this case too.
+      return;
+    }
+    OpenOption openOption = isDirectory ? StandardOpenOption.READ : StandardOpenOption.WRITE;
     try (FileChannel fc = FileChannel.open(path, openOption)) {
       try {
         fc.force(true);

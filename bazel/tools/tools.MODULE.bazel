@@ -1,4 +1,4 @@
-"""MODULE.bazel for prometheus."""
+"""MODULE.bazel for prometheus and the Windows service wrapper (WinSW)."""
 
 tools_repos = use_extension("//bazel/tools:extensions.bzl", "tools_repos")
 use_repo(
@@ -7,4 +7,5 @@ use_repo(
     "prometheus_linux_x86_64",
     "prometheus_macos_aarch64",
     "prometheus_macos_x86_64",
+    "winsw_windows",
 )

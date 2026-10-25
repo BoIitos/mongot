@@ -1,5 +1,5 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load(":def.bzl", "package_deploy_tar", "pkg_var", "set_version")
+load(":def.bzl", "package_deploy_tar", "package_deploy_zip", "pkg_var", "set_version")
 
 pkg_var(
     name = "release_pkg_vars",
@@ -94,4 +94,43 @@ package_deploy_tar(
         ":generate_community_version_file",
     ],
     with_tags = False,
+)
+
+# Windows x86_64 bundle. The Java code is platform independent, so this target is
+# built on a Linux x86_64 host (native or WSL2) without --platforms:
+#   make build.deploy.community.windows
+# Output: bazel-bin/deploy/mongot-community-windows_<version>_windows_x86_64.zip
+pkg_var(
+    name = "windows_pkg_vars",
+    platform = "windows_x86_64",
+    version = "//bazel/config:version",
+)
+
+package_deploy_zip(
+    name = "mongot-community-windows",
+    bin = [
+        "//:mongot_community_deploy.jar",
+    ],
+    lib = [
+        "//:fips-jars",
+        "//src/main/c:mongot_vecsim_windows_x86_64",
+    ],
+    license = [
+        ":community-resources/LICENSE/LICENSE",
+        ":community-resources/LICENSE/THIRD_PARTY_NOTICES.txt",
+        ":windows-resources/LICENSE-WinSW.txt",
+    ],
+    package_variables = ":windows_pkg_vars",
+    target_jdk = "@adoptium_jdk_community_windows_x86_64//:jdk",
+    toplevel = [
+        ":community-resources/README.md",
+        ":generate_community_version_file",
+        ":windows-resources/README-Windows.md",
+        ":windows-resources/config.default.yml",
+        ":windows-resources/install-service.ps1",
+        ":windows-resources/mongot.cmd",
+        ":windows-resources/mongot-service.xml",
+        ":windows-resources/uninstall-service.ps1",
+        "@winsw_windows//file",
+    ],
 )

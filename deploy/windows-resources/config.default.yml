@@ -1,0 +1,33 @@
+# This is a sample configuration file for mongot on Windows. Please modify it to match your
+# mongod configuration and environment.
+#
+# Windows paths: use single quotes so YAML keeps the backslashes literally
+# (e.g. 'C:\ProgramData\mongot\data'), or use forward slashes (C:/ProgramData/mongot/data).
+syncSource:
+  replicaSet:
+    hostAndPort: "localhost:27017" # Replace with the mongod host and port.
+    username: mongotUser # Replace with mongod username enabled with "searchCoordinator" role.
+    passwordFile: 'C:\ProgramData\mongot\secrets\passwordFile' # File containing only the password of the above user.
+    tls: false
+storage:
+  dataPath: 'C:\ProgramData\mongot\data' # Replace with the path where you want mongot to store search data.
+server:
+  grpc:
+    address: "localhost:27028" # Replace with the address and port for mongot listen server
+    tls:
+      mode: "disabled"
+metrics:
+  enabled: true
+  address: "localhost:9946"
+healthCheck:
+  address: "localhost:8080"
+logging:
+  verbosity: INFO
+  # When running as a Windows service, leave logPath unset: the service wrapper captures the
+  # output and rotates it in C:\ProgramData\mongot\logs.
+  # logPath: 'C:\ProgramData\mongot\logs\mongot.log'
+
+#embedding: # Optional Auto-embedding configuration for Voyage AI
+#  queryKeyFile: 'C:\ProgramData\mongot\secrets\voyage-api-query-key'
+#  indexingKeyFile: 'C:\ProgramData\mongot\secrets\voyage-api-indexing-key'
+#  providerEndpoint: https://ai.mongodb.com/v1/embeddings

@@ -1,4 +1,4 @@
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 
 _PROMTOOL_BUILD = """
 filegroup(
@@ -36,6 +36,15 @@ def _impl(_mctx):
         sha256 = "875db6df65636d047b6aea3cfac56f4a0e2deb325232fb87bda2383d0330f033",
         strip_prefix = "prometheus-2.54.0.darwin-arm64",
         build_file_content = _PROMTOOL_BUILD,
+    )
+
+    # Windows service wrapper (MIT licensed) bundled into //deploy:mongot-community-windows
+    # as mongot-service.exe; it reads its configuration from mongot-service.xml next to it.
+    http_file(
+        name = "winsw_windows",
+        downloaded_file_path = "mongot-service.exe",
+        sha256 = "b5066b7bbdfba1293e5d15cda3caaea88fbeab35bd5b38c41c913d492aadfc4f",
+        urls = ["https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW.NET461.exe"],
     )
 
 tools_repos = module_extension(implementation = _impl)

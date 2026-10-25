@@ -31,6 +31,7 @@ def adoptium_jdk_community():
     _adoptium_jdk_community_linux_aarch64()
     _adoptium_jdk_community_macos_x86_64()
     _adoptium_jdk_community_macos_aarch64()
+    _adoptium_jdk_community_windows_x86_64()
 
 def _adoptium_jdk_linux_x86_64():
     http_archive(
@@ -158,4 +159,18 @@ def _adoptium_jdk_community_macos_aarch64():
         sha256 = "6ebcf221c9b41507b14c098e93c6ead6440b8d9bd154f8ec666c4c73abbdb201",
         strip_prefix = "jdk-21.0.11+10",
         urls = ["https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.11%2B10/OpenJDK21U-jdk_aarch64_mac_hotspot_21.0.11_10.tar.gz"],
+    )
+
+def _adoptium_jdk_community_windows_x86_64():
+    """Windows JDK bundled into //deploy:mongot-community-windows.
+
+    Only an http_archive (no remote_java_repository): Java is compiled on the
+    Linux/macOS build host, the Windows JDK is only shipped as the runtime.
+    """
+    http_archive(
+        name = "adoptium_jdk_community_windows_x86_64",
+        build_file = Label("//bazel/java:jdk_windows.BUILD"),
+        sha256 = "d3625e7cadf23787ea540229544b6e2ab494b3b54da1801879e583e1dfee0a64",
+        strip_prefix = "jdk-21.0.11+10",
+        urls = ["https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.11%2B10/OpenJDK21U-jdk_x64_windows_hotspot_21.0.11_10.zip"],
     )
